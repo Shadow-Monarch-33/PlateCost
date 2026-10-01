@@ -10,7 +10,7 @@ export type MoneyAmount = {
   amount: string;
 };
 
-export type BaseUnit = "g" | "kg" | "ml" | "l" | "each";
+export type BaseUnit = "g" | "kg" | "ml" | "L" | "piece";
 
 export type IngredientPrice = {
   amount: MoneyAmount;

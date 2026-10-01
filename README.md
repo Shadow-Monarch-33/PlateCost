@@ -13,7 +13,8 @@ PlateCost is one Next.js application with a hybrid layered structure:
 - `src/domain` - framework-independent financial and unit contracts. This layer must remain free
   of React, Next.js, Supabase, AI SDKs, and browser APIs.
 - `src/infrastructure` - Supabase browser/server integration boundaries.
-- `supabase/migrations` - tenant-isolated PostgreSQL schema and transactional database functions.
+- `supabase/migrations` - tenant-isolated PostgreSQL schema, scenario/impact boundaries, and
+  transactional database functions.
 - `tests` - focused domain tests and shared fixtures.
 
 Dependencies point inward: UI/application code may use domain contracts; infrastructure implements
@@ -51,7 +52,8 @@ should be re-verified before release.
 Required variables are `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 `SUPABASE_SERVICE_ROLE_KEY` is reserved for server-only privileged operations and must never be
 exposed to browser code. `AI_PROVIDER_API_KEY` is reserved for a future server-side provider
-adapter.
+adapter. The canonical architecture's scenario, price-change, and business-snapshot tables are
+storage boundaries only; their product workflows are not implemented yet.
 
 ## Verification commands
 
@@ -69,7 +71,8 @@ not required because invoice/recipe extraction is only an abstraction at this st
 ## Financial truth rule
 
 AI output is untrusted input. It must be runtime-validated and, where required, human-confirmed
-before it can affect business data. Deterministic domain code owns unit normalization and all
-financial calculations. PostgreSQL `numeric(14,4)` stores current and historical prices; UI
-rounding is presentation-only. Scenarios and price-impact previews must remain side-effect free,
-while confirmed price changes use the transactional database function boundary.
+before it can affect business data. Missing values remain nullable. Deterministic domain code owns
+unit normalization and all financial calculations. PostgreSQL `numeric(14,4)` stores current and
+historical prices; UI rounding is presentation-only. Scenarios and price-impact previews must
+remain side-effect free, while confirmed price changes use the transactional database function
+boundary.

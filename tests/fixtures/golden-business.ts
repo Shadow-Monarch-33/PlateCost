@@ -1,4 +1,6 @@
 export const goldenBusinessFixture = {
+  startingCapital: 300_000,
+  ordersPerDay: 50,
   sellingPrice: 199,
   ingredientCost: 82,
   packagingCost: 10,
