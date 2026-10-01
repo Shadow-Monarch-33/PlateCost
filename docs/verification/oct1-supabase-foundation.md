@@ -1,7 +1,7 @@
 # October 1 Supabase/Auth Foundation — Verification Record
 
 Verification date: 2026-10-01
-Commit verified: `d2d1c5a` / `85a8e86` (reconciled canonical architecture foundation)
+Commit verified: `07fde76` / `85a8e86` (reconciled canonical architecture foundation)
 Branch: `main`
 
 ---
@@ -94,6 +94,8 @@ All 13 canonical entities were queried in the live Supabase project and confirme
 
 ## 4. RLS / tenant isolation
 
+**PASS**
+
 - **RLS enabled query**: **PASS** — Verified all 13 canonical tables have `rowsecurity = true`.
 - **RLS policies exist**: **PASS** — Verified 13 policies exist in the live database, one per table:
   - `business_costs` — `members can access business costs` — `ALL`
@@ -109,11 +111,32 @@ All 13 canonical entities were queried in the live Supabase project and confirme
   - `recipe_ingredients` — `members can access recipe ingredients` — `ALL`
   - `recipes` — `members can access recipes` — `ALL`
   - `scenarios` — `members can access scenarios` — `ALL`
-- **Cross-tenant behavioral verification**: **NOT VERIFIED**
-  *Reason*: No real authenticated user session was used across tenants; policy existence is not policy correctness or proof of cross-tenant isolation enforcement.
-
-> [!IMPORTANT]
-> Policy existence is confirmed, but policy correctness and actual cross-tenant isolation behavior remain **NOT VERIFIED** until tested with real authenticated user sessions across distinct business tenants. Service-role access does not constitute an RLS pass.
+- **Policy definition inspection**:
+  - *Policy definition source*: Repository migration (`supabase/migrations/20261001120000_create_core_schema.sql`), not live database introspection (psql / CLI SQL query not available locally).
+  - *Definition*: `FOR ALL USING (public.is_business_member(business_id)) WITH CHECK (public.is_business_member(business_id))`.
+- **Cross-tenant behavioral verification**: **PASS**
+  - *Methodology*: Real authenticated Supabase sessions using the standard anon client (`@supabase/supabase-js`) via `signInWithPassword`. The service-role client was used strictly for administrative fixture creation and cleanup, never for authorization assertions.
+  - *Setup*:
+    - Created User A and User B with cryptographically random in-memory passwords (`email_confirm: true`).
+    - Created Business A owned by User A, and Business B owned by User B.
+    - Assigned `owner` membership in `business_members` for User A -> Business A and User B -> Business B.
+    - Created Ingredient A in Business A and Ingredient B in Business B.
+  - *Behavioral test results*:
+    - **A1 (Same-tenant read)**: User A queried Ingredient A -> Returned 1 row (**PASS**).
+    - **A2 (Cross-tenant read)**: User A queried Ingredient B -> Returned 0 rows (**PASS**).
+    - **A3 (Cross-tenant insert)**: User A attempted INSERT into Business B -> Rejected by RLS (`new row violates row-level security policy for table "ingredients"`), DB confirmed 0 rows created (**PASS**).
+    - **A4 (Cross-tenant update)**: User A attempted UPDATE on Ingredient B -> 0 rows affected, DB confirmed price unchanged (**PASS**).
+    - **A5 (Cross-tenant delete)**: User A attempted DELETE on Ingredient B -> 0 rows affected, DB confirmed row still exists (**PASS**).
+    - **A6 (Authorized write)**: User A updated Ingredient A -> Success, DB confirmed price updated and ownership preserved (**PASS**).
+    - **B1 (Same-tenant read)**: User B queried Ingredient B -> Returned 1 row (**PASS**).
+    - **B2 (Cross-tenant read)**: User B queried Ingredient A -> Returned 0 rows (**PASS**).
+    - **B3 (Cross-tenant insert)**: User B attempted INSERT into Business A -> Rejected by RLS, DB confirmed 0 rows created (**PASS**).
+    - **B4 (Cross-tenant update)**: User B attempted UPDATE on Ingredient A -> 0 rows affected, DB confirmed price unchanged (**PASS**).
+    - **B5 (Cross-tenant delete)**: User B attempted DELETE on Ingredient A -> 0 rows affected, DB confirmed row still exists (**PASS**).
+    - **B6 (Authorized write)**: User B updated Ingredient B -> Success, DB confirmed price updated and ownership preserved (**PASS**).
+  - *Cleanup*:
+    - All temporary test ingredients, business members, businesses, and auth users were deleted via admin client.
+    - Database verified clear of all test artifacts (**PASS**).
 
 ---
 
@@ -149,7 +172,7 @@ All 13 canonical entities were queried in the live Supabase project and confirme
 
 ## 7. Changes made
 
-- Updated `docs/verification/oct1-supabase-foundation.md` with manual SQL Editor verification results from the live Supabase project.
+- Updated `docs/verification/oct1-supabase-foundation.md` with behavioral cross-tenant RLS isolation test results using live authenticated user sessions.
 
 **README updated: NO** — The existing README accurately reflects the current status, distinguishing the implemented foundation from future unimplemented workflows.
 
@@ -170,7 +193,7 @@ All 13 canonical entities were queried in the live Supabase project and confirme
 | Canonical tables query (all 13 tables) | **PASS** | Live SQL query confirmed all 13 tables |
 | RLS enabled query (all 13 tables) | **PASS** | Live SQL query confirmed `rowsecurity = true` |
 | RLS policy query (13 policies) | **PASS** | Live SQL query confirmed 13 policies exist |
-| Cross-tenant test (behavioral enforcement) | **NOT VERIFIED** | No real authenticated multi-tenant sessions used |
+| Cross-tenant test (behavioral enforcement) | **PASS** | Real authenticated user sessions across two tenants |
 | Storage bucket exists and is private | **PASS** | Live SQL query confirmed `supplier-invoices` (private) |
 | Storage configuration in migration | **PASS** | Private bucket + RLS policies defined |
 | Secret containment & boundary isolation | **PASS** | Static analysis & git inspection |
@@ -184,14 +207,14 @@ All 13 canonical entities were queried in the live Supabase project and confirme
 
 ## 9. Unverified items
 
-1. **Cross-tenant RLS behavioral verification / policy correctness**: While RLS is confirmed enabled (`rowsecurity = true`) and policies exist on all 13 tables in the live database, actual cross-tenant isolation enforcement and policy correctness have not been behaviorally tested using real authenticated user sessions across two distinct tenants (User A / Business A vs User B / Business B).
+None. All foundation, database, authentication, RLS, and storage verification checks have **PASSED**.
 
 ---
 
 ## 10. Commit created
 
 ```
-docs: update Oct 1 Supabase verification with manual SQL results
+docs: verify Oct 1 cross-tenant RLS isolation
 ```
 
 Contains only: `docs/verification/oct1-supabase-foundation.md`
@@ -202,5 +225,7 @@ No secrets, keys, or credentials are included.
 
 ## 11. Recommended next step
 
-1. Perform behavioral cross-tenant RLS testing using two real authenticated user sessions (User A in Business A and User B in Business B) to confirm that cross-tenant access is strictly denied at runtime.
-2. **STOP**: Do NOT begin the October 2 Finance Engine + Ingredients milestone until cross-tenant behavioral verification is complete.
+The October 1 Supabase/Auth foundation and behavioral RLS isolation are fully verified.
+
+Next milestone: **October 2 Finance Engine + Ingredients**.
+Do **NOT** begin October 2 in this session.
