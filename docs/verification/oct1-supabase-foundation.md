@@ -1,7 +1,7 @@
 # October 1 Supabase/Auth Foundation — Verification Record
 
-Verification date: 2026-10-01  
-Commit verified: `85a8e86` (chore: reconcile foundation with canonical architecture document)  
+Verification date: 2026-10-01
+Commit verified: `39501d6` / `85a8e86` (reconciled canonical architecture foundation)
 Branch: `main`
 
 ---
@@ -12,44 +12,40 @@ Branch: `main`
 |------|--------|
 | Worktree | Clean |
 | Package manager | pnpm 12.4.2 |
-| `.env.local` | **Absent** — no real Supabase credentials in local environment |
-| `NEXT_PUBLIC_SUPABASE_URL` | Not set |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Not set |
-| `SUPABASE_SERVICE_ROLE_KEY` | Not set |
-| Supabase CLI | Not installed |
-| Supabase project linkage | None (no `supabase/config.toml`) |
-
-Because `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are absent, all
-checks that require a live Supabase connection are reported as **NOT VERIFIED**.
+| `.env.local` | **Present** — configured locally with real credentials |
+| `NEXT_PUBLIC_SUPABASE_URL` | Configured and verified via live HTTPS connection |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Configured and verified via live Supabase client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Configured and verified for server-only operations |
+| `AI_PROVIDER_API_KEY` | Configured in environment (no SDK in source) |
+| `DATABASE_URL` / `SUPABASE_DB_URL` | **Absent** from local environment |
+| Supabase CLI | Not installed in PATH; no `supabase/config.toml` |
+| Supabase project linkage | Remote project active; migrations not yet applied |
 
 ---
 
 ## 1. Supabase connection
 
-**NOT VERIFIED** — No `.env.local` file exists.  
-The config module (`src/infrastructure/supabase/config.ts`) validates both public env vars
-through a Zod schema at call-time; without the variables the client cannot be constructed.
-A live connection test was therefore impossible.
+**PASS**
+- `.env.local` environment parsed and validated at runtime via `src/infrastructure/supabase/config.ts` Zod schema (`getPublicSupabaseEnvironment()`).
+- Live HTTPS connectivity to the Supabase endpoint verified using `@supabase/supabase-js`.
+- Anonymous client initialization succeeded against the live endpoint.
 
 ---
 
 ## 2. Authentication
 
-**NOT VERIFIED** — No live credentials.
+**PASS** (Auth session handling, user identity resolution, and unauthenticated boundary verified against real project)
 
-Structural check (PASS — not equivalent to runtime verification):
-
-- `src/infrastructure/supabase/server.ts` creates a server client via `@supabase/ssr`
-  `createServerClient`, reading session tokens from the Next.js cookie store.
-- `src/infrastructure/supabase/browser.ts` is marked `"use client"` and creates a browser
-  client via `createBrowserClient`.
-- The two boundaries are correctly separated; neither imports the other.
-- `getPublicSupabaseEnvironment()` is the only function callable from browser context;
-  `getSupabaseServiceRoleKey()` is only exported from the config module and is not imported
-  anywhere in the current source tree — it exists as a server-only contract.
-
-Unauthenticated-vs-authenticated session behaviour and server-side identity resolution
-cannot be exercised without a real Supabase project.
+- **Unauthenticated requests**: Verified against the real Supabase Auth endpoint. `getSession()` returned `{ session: null }` and `getUser()` returned `null` with `AuthSessionMissingError`. Unauthenticated requests are not treated as authenticated.
+- **Server/client boundaries**:
+  - `src/infrastructure/supabase/server.ts` uses `@supabase/ssr` `createServerClient` reading from cookie store — verified SSR client instantiation.
+  - `src/infrastructure/supabase/browser.ts` has `"use client"` directive and uses `createBrowserClient` — verified client boundary.
+  - `getPublicSupabaseEnvironment()` is safely accessible by browser client; `getSupabaseServiceRoleKey()` is strictly server-only.
+- **Authenticated session & identity resolution**:
+  - Created an ephemeral test user via admin auth API (`admin.createUser`).
+  - Successfully signed in via `signInWithPassword()` through the anon client to receive a real JWT user session.
+  - Resolved user identity (`id`, `email`, `aud`) server-side via `auth.getUser(token)` using the real JWT.
+  - Successfully cleaned up and deleted the ephemeral test user via `admin.deleteUser()`.
 
 ---
 
@@ -63,34 +59,33 @@ cannot be exercised without a real Supabase project.
 | `pnpm lint` | **PASS** |
 | `pnpm typecheck` | **PASS** |
 | `pnpm test` (2/2) | **PASS** |
-| `pnpm build` | **PASS** |
+| `pnpm build` | **PASS** (Next.js 16.3.8 Turbopack with `.env.local`) |
 
-### Canonical table coverage (structural inspection — not equivalent to live DB verification)
+### Canonical table verification against real Supabase project
 
-All 13 canonical entities are present in `supabase/migrations/`:
+All 13 canonical entities were probed against the real Supabase project via PostgREST:
 
-| Table | Migration file | RLS enabled | Policy present |
-|-------|----------------|-------------|----------------|
-| businesses | core schema | ✓ | ✓ (select via membership) |
-| business_members | core schema | ✓ | ✓ (select via membership) |
-| ingredients | core schema | ✓ | ✓ (all via membership) |
-| ingredient_price_history | core schema | ✓ | ✓ (all via membership) |
-| recipes | core schema | ✓ | ✓ (all via membership) |
-| recipe_ingredients | core schema | ✓ | ✓ (all via membership, joins recipes) |
-| menu_items | core schema | ✓ | ✓ (all via membership) |
-| business_costs | core schema | ✓ | ✓ (all via membership) |
-| invoices | core schema | ✓ | ✓ (all via membership) |
-| invoice_items | core schema | ✓ | ✓ (all via membership) |
-| price_changes | reconcile migration | ✓ | ✓ (all via membership) |
-| scenarios | reconcile migration | ✓ | ✓ (all via membership) |
-| business_snapshots | reconcile migration | ✓ | ✓ (all via membership) |
+| Entity | Status in Live Project | Code / Detail |
+|--------|------------------------|---------------|
+| businesses | **NOT FOUND** | PGRST205 (not in schema cache) |
+| business_members | **NOT FOUND** | PGRST205 (not in schema cache) |
+| ingredients | **NOT FOUND** | PGRST205 (not in schema cache) |
+| ingredient_price_history | **NOT FOUND** | PGRST205 (not in schema cache) |
+| recipes | **NOT FOUND** | PGRST205 (not in schema cache) |
+| recipe_ingredients | **NOT FOUND** | PGRST205 (not in schema cache) |
+| menu_items | **NOT FOUND** | PGRST205 (not in schema cache) |
+| business_costs | **NOT FOUND** | PGRST205 (not in schema cache) |
+| invoices | **NOT FOUND** | PGRST205 (not in schema cache) |
+| invoice_items | **NOT FOUND** | PGRST205 (not in schema cache) |
+| price_changes | **NOT FOUND** | PGRST205 (not in schema cache) |
+| scenarios | **NOT FOUND** | PGRST205 (not in schema cache) |
+| business_snapshots | **NOT FOUND** | PGRST205 (not in schema cache) |
 
-`price_changes`, `scenarios`, and `business_snapshots` are schema-only persistence
-boundaries. Their product workflows are not implemented.
+**Reason**: The migration files (`20261001120000_create_core_schema.sql` and `20261001184700_reconcile_canonical_architecture.sql`) exist in `supabase/migrations/` but have not yet been executed on this remote Supabase project. No direct database connection string (`DATABASE_URL`/`SUPABASE_DB_URL`) or Supabase CLI access token is configured locally to apply them programmatically.
 
 ### Live migration / schema verification
 
-**NOT VERIFIED** — No Supabase CLI and no live project credentials.
+**NOT VERIFIED** — Migrations exist locally but have not been applied to the live database.
 
 ---
 
@@ -98,43 +93,32 @@ boundaries. Their product workflows are not implemented.
 
 **NOT VERIFIED — structural inspection only**
 
-The RLS mechanism:
+Cross-tenant RLS was evaluated:
+- **Real authenticated sessions against tables**: Could not be executed because the database tables (`businesses`, `business_members`, etc.) do not yet exist on the remote database.
+- **Service-role access**: Intentionally NOT used to claim an RLS pass, in strict accordance with project rules.
 
-- `public.is_business_member(target_business_id uuid)` is a `SECURITY DEFINER` stable
-  function with `search_path = public`. It resolves `auth.uid()` against `business_members`.
-- Every table policy calls `is_business_member(business_id)`.
+Structural inspection of `supabase/migrations/`:
+- `alter table ... enable row level security` is present for all 13 canonical tables.
+- `public.is_business_member(target_business_id uuid)` is defined as `SECURITY DEFINER` with explicit `search_path = public`, resolving `auth.uid()`.
+- Table policies enforce `is_business_member(business_id)`.
 - `recipe_ingredients` policies join through `recipes` to resolve `business_id`.
-- `storage.objects` policies join through `invoices.file_path` to scope storage access.
-- The `apply_ingredient_price_change` function is `SECURITY INVOKER`, meaning RLS applies
-  to it in the caller's context.
-
-**Cross-tenant test**: NOT performed.  
-Reason: No live Supabase project credentials available. Without real authenticated sessions
-for two separate users in separate businesses, the cross-tenant isolation cannot be
-exercised. Service-role access was not used as a substitute.
+- `apply_ingredient_price_change()` is `SECURITY INVOKER`, ensuring caller RLS applies.
 
 > [!IMPORTANT]
-> An RLS PASS requires real authenticated user sessions. Service-role access bypasses RLS
-> entirely and must never be presented as RLS verification. This check remains open until
-> credentials are provided.
+> Live cross-tenant isolation remains NOT VERIFIED until database migrations are applied to the real project, allowing two real user sessions with distinct business memberships to be queried against live tables.
 
 ---
 
 ## 5. Storage
 
-**NOT VERIFIED** — live project credentials absent.
+**NOT VERIFIED (live bucket)** / **PASS (schema/policy definition)**
 
-Structural check (not equivalent to live verification):
-
-- Migration inserts into `storage.buckets` with `public = false` → bucket is private by
-  design.
-- Two `storage.objects` policies are defined: one for SELECT (read), one for INSERT
-  (upload). Both check `bucket_id = 'supplier-invoices'` and require the file path to
-  match an invoice the authenticated user has business-member access to.
-- No permanent public URL is set.
-
-Whether the bucket actually exists in the linked Supabase project cannot be confirmed
-without a live connection.
+- Probed real Supabase storage via `storage.listBuckets()`: returned `[]` (empty).
+- The `supplier-invoices` bucket does not exist in the live project because the SQL migration (`insert into storage.buckets ...`) has not been executed on the remote database.
+- Structural verification of `supabase/migrations/20261001120000_create_core_schema.sql`:
+  - Bucket defined with `public = false` (private).
+  - SELECT and INSERT policies on `storage.objects` scope access to authenticated business members matching `invoices.file_path`.
+  - Permanent public access is disabled by design.
 
 ---
 
@@ -142,32 +126,26 @@ without a live connection.
 
 | Check | Method | Result |
 |-------|--------|--------|
-| `SUPABASE_SERVICE_ROLE_KEY` server-only | Static import analysis | **PASS** |
-| `AI_PROVIDER_API_KEY` server-only | Static import analysis | **PASS** |
-| Browser client cannot import service-role key | Static import analysis | **PASS** |
-| `browser.ts` is `"use client"` | Code inspection | **PASS** |
-| `server.ts` has no `"use client"` directive | Code inspection | **PASS** |
-| No raw Supabase client in domain layer | Code inspection | **PASS** |
-| No raw Supabase client in application layer | Code inspection | **PASS** |
-| No AI provider SDK in source tree | Code inspection | **PASS** |
-| AI boundary is interface-only (`ports.ts`) | Code inspection | **PASS** |
-| `.gitignore` protects `.env*` (except `.env.example`) | Code inspection | **PASS** |
-| No hardcoded credentials found | Code inspection | **PASS** |
-
-`getSupabaseServiceRoleKey()` is defined in `config.ts` (server-only path) and is not
-imported anywhere in the current codebase — it is reserved for future server-side operations.
-No client component or domain module can reach it through a `"use client"` import chain.
+| `SUPABASE_SERVICE_ROLE_KEY` server-only | Static analysis & runtime check | **PASS** |
+| `AI_PROVIDER_API_KEY` server-only | Static analysis & runtime check | **PASS** |
+| Browser client cannot import service-role key | Static analysis (`config.ts` isolation) | **PASS** |
+| `browser.ts` has `"use client"` | Code inspection | **PASS** |
+| `server.ts` server-side only | Code inspection | **PASS** |
+| No raw Supabase queries in domain layer | Static analysis (`src/domain/`) | **PASS** |
+| No raw Supabase queries in application layer | Static analysis (`src/application/`) | **PASS** |
+| No AI provider SDK in source tree | Static analysis | **PASS** |
+| AI boundary is provider-agnostic (`ports.ts`) | Code inspection | **PASS** |
+| `.gitignore` protects `.env*` files | Git status & `.gitignore` verification | **PASS** |
+| No secrets committed to repository | Git diff & commit inspection | **PASS** |
 
 ---
 
 ## 7. Changes made
 
-The following changes were made as part of this verification task:
+- Updated `docs/verification/oct1-supabase-foundation.md` with live Supabase verification findings.
+- Verified local builds, linting, tests, and type checking against `.env.local`.
 
-- Added `docs/verification/oct1-supabase-foundation.md` (this document).
-
-**README updated: NO** — The existing README accurately distinguishes implemented foundation
-from unimplemented product workflows. No corrections were required.
+**README updated: NO** — The existing README accurately reflects the current status, distinguishing the implemented foundation from future unimplemented workflows.
 
 ---
 
@@ -175,53 +153,36 @@ from unimplemented product workflows. No corrections were required.
 
 | Check | Result | Method |
 |-------|--------|--------|
-| pnpm install | **PASS** | Executed |
-| pnpm lint | **PASS** | Executed |
-| pnpm typecheck | **PASS** | Executed |
-| pnpm test | **PASS** | Executed (2/2 tests) |
-| pnpm build | **PASS** | Executed |
-| Supabase connection | **NOT VERIFIED** | No credentials |
-| Auth session (server-side) | **NOT VERIFIED** | No credentials |
-| Auth session (unauthenticated rejection) | **NOT VERIFIED** | No credentials |
-| Authenticated DB access | **NOT VERIFIED** | No credentials |
-| Migration status vs live project | **NOT VERIFIED** | No CLI / credentials |
-| Schema: all 13 canonical tables | **PASS** (structural) | Migration inspection |
-| RLS enabled on all tables | **PASS** (structural) | Migration inspection |
-| RLS policies present on all tables | **PASS** (structural) | Migration inspection |
-| Cross-tenant RLS (real sessions) | **NOT VERIFIED** | No credentials |
-| Storage bucket defined as private | **PASS** (structural) | Migration inspection |
-| Storage bucket exists in live project | **NOT VERIFIED** | No credentials |
-| Service-role key server-only | **PASS** | Static analysis |
-| No AI provider SDK in source | **PASS** | Static analysis |
-| Domain layer isolated from frameworks | **PASS** | Static analysis |
-| .gitignore protects secrets | **PASS** | Code inspection |
+| pnpm install | **PASS** | Executed locally |
+| pnpm lint | **PASS** | Executed locally |
+| pnpm typecheck | **PASS** | Executed locally |
+| pnpm test | **PASS** | Executed locally (2/2 tests) |
+| pnpm build | **PASS** | Executed locally with `.env.local` |
+| Supabase connection | **PASS** | Live HTTPS query to real project |
+| Auth unauthenticated rejection | **PASS** | Live query returns null session & error |
+| Auth user creation & sign-in | **PASS** | Live GoTrue test user session created |
+| Server-side session verification | **PASS** | Live token verified via `auth.getUser()` |
+| Test user cleanup | **PASS** | Ephemeral user deleted via admin API |
+| Database migrations on live project | **NOT VERIFIED** | Tables missing (PGRST205); migrations unapplied |
+| Schema coverage in migration files | **PASS** | All 13 canonical entities defined with RLS |
+| Authenticated database access | **NOT VERIFIED** | Blocked by missing tables in live DB |
+| Cross-tenant RLS (live sessions) | **NOT VERIFIED** | Blocked by missing tables in live DB |
+| Storage bucket in live project | **NOT VERIFIED** | Bucket missing; migration unapplied |
+| Storage configuration in migration | **PASS** | Private bucket + RLS policies defined |
+| Secret containment & boundary safety | **PASS** | Verified server-only access & `.gitignore` |
 
 ---
 
 ## 9. Unverified items
 
-All unverified items have the same root cause: **no `.env.local` with valid Supabase
-credentials and no Supabase CLI installation**.
+1. **Database migrations on live project**: The 13 canonical tables do not exist in the remote database (`PGRST205`). Neither direct database credentials (`DATABASE_URL`) nor Supabase CLI linkage credentials are present locally to apply them.
+2. **Authenticated database access**: Blocked until tables are created in the live database.
+3. **Cross-tenant RLS verification**: Cannot be exercised against live data until tables and memberships exist.
+4. **Storage bucket existence in live project**: `supplier-invoices` bucket must be created via migration.
 
-1. Live Supabase connection
-2. Auth session creation, reading, and unauthenticated rejection
-3. Authenticated server-side session access
-4. Business membership resolution via live query
-5. Authenticated database access through intended boundaries
-6. Migration execution against real project (unknown whether migrations were applied)
-7. Cross-tenant RLS using real authenticated user sessions for User A / Business A vs
-   User B / Business B isolation
-8. Storage bucket physical existence and private configuration in the live project
-
-**To unblock these checks:**
-
-1. Create `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   (see `.env.example`).
-2. Optionally add `SUPABASE_SERVICE_ROLE_KEY` for fixture-creation during cross-tenant RLS
-   testing (server-side use only; never commit).
-3. Apply migrations via the Supabase dashboard SQL editor or install the Supabase CLI
-   (`brew install supabase/tap/supabase`) and run `supabase db push`.
-4. Create two test users and two businesses, one per user, to exercise cross-tenant isolation.
+**To unblock:**
+1. Apply the two SQL migration files (`supabase/migrations/*.sql`) to the Supabase project using the Supabase Dashboard SQL Editor (or via CLI with DB password/access token).
+2. Once tables exist, run cross-tenant RLS verification using two distinct authenticated user sessions.
 
 ---
 
@@ -233,25 +194,12 @@ chore: verify Supabase foundation
 
 Contains only: `docs/verification/oct1-supabase-foundation.md`
 
-No credentials, secrets, test data, or generated output are included.
+No secrets, keys, or credentials are included.
 
 ---
 
 ## 11. Recommended next step
 
-**Provide Supabase credentials to complete the live verification.**
-
-The foundation's structural correctness is confirmed by the local checks. The live
-infrastructure checks are blocked solely by absent credentials.
-
-Priority order:
-
-1. Create `.env.local` with public Supabase vars.
-2. Apply migrations to the real Supabase project.
-3. Verify the live connection (build will confirm env parsing).
-4. Create two test user sessions and two businesses; test cross-tenant isolation with
-   real authenticated queries using the anon-key client (not service-role).
-5. Confirm the `supplier-invoices` storage bucket exists and is private.
-
-Do **not** begin the October 2 Finance Engine + Ingredients milestone until live Supabase
-verification is complete.
+1. Apply `supabase/migrations/20261001120000_create_core_schema.sql` and `supabase/migrations/20261001184700_reconcile_canonical_architecture.sql` in the Supabase Dashboard SQL Editor.
+2. Re-run live database and cross-tenant RLS verification with real authenticated sessions across two test businesses.
+3. Do **NOT** start the October 2 Finance Engine + Ingredients milestone until the database schema and RLS verification are complete.
