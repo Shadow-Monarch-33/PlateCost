@@ -90,7 +90,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+        className="w-full rounded-lg dark:border dark:border-zinc-600 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 disabled:opacity-50 transition-colors"
       >
         {isLoading ? "Signing in..." : "Sign in"}
       </button>

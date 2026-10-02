@@ -30,13 +30,13 @@ export default function Home() {
       <div className="flex flex-wrap gap-3">
         <a
           href="/signup"
-          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors"
+          className="inline-flex items-center justify-center rounded-lg dark:border dark:border-zinc-600 bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors"
         >
           Create account
         </a>
         <a
           href="/login"
-          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 shadow-2xs hover:bg-zinc-50 transition-colors"
+          className="inline-flex items-center justify-center rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 shadow-2xs hover:bg-zinc-50 transition-colors"
         >
           Sign in
         </a>
