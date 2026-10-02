@@ -20,7 +20,12 @@ import { getPublicSupabaseEnvironment, getSupabaseServiceRoleKey } from "./confi
 export interface BusinessSession {
   userId: string;
   businessId: string;
+  businessName: string;
   role: string;
+}
+
+interface ResolveOptions {
+  autoProvision?: boolean;
 }
 
 /**
@@ -29,7 +34,16 @@ export interface BusinessSession {
  */
 export async function resolveUserBusiness(
   supabase: SupabaseClient,
-): Promise<BusinessSession> {
+  options: { autoProvision: false }
+): Promise<BusinessSession | null>;
+export async function resolveUserBusiness(
+  supabase: SupabaseClient,
+  options?: { autoProvision: true }
+): Promise<BusinessSession>;
+export async function resolveUserBusiness(
+  supabase: SupabaseClient,
+  options: ResolveOptions = { autoProvision: true }
+): Promise<BusinessSession | null> {
   const {
     data: { user },
     error: authError,
@@ -42,7 +56,7 @@ export async function resolveUserBusiness(
   // Check existing membership
   const { data: member, error: memberError } = await supabase
     .from("business_members")
-    .select("business_id, role")
+    .select("business_id, role, businesses(name)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -53,11 +67,18 @@ export async function resolveUserBusiness(
   }
 
   if (member) {
+    const businessName =
+      (member.businesses as unknown as { name: string })?.name ?? "My Business";
     return {
       userId: user.id,
       businessId: member.business_id,
+      businessName,
       role: member.role,
     };
+  }
+
+  if (!options.autoProvision) {
+    return null;
   }
 
   // If user has no business yet (fresh sign-up / dev environment),
@@ -82,7 +103,7 @@ export async function resolveUserBusiness(
         currency: "INR",
         owner_id: user.id,
       })
-      .select("id")
+      .select("id, name")
       .single();
 
     if (!createBizError && newBusiness) {
@@ -98,6 +119,7 @@ export async function resolveUserBusiness(
         return {
           userId: user.id,
           businessId: newBusiness.id,
+          businessName: newBusiness.name,
           role: "owner",
         };
       }

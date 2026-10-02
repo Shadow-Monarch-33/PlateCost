@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "../../infrastructure/supabase/server";
+import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
 import {
   resolveUserBusiness,
   getIngredients,
@@ -9,15 +9,15 @@ import {
   updateIngredient,
   deleteIngredient,
   getIngredientPriceHistory,
-} from "../../infrastructure/supabase/ingredients";
+} from "@/infrastructure/supabase/ingredients";
 import type {
   CreateIngredientInput,
   UpdateIngredientInput,
-} from "../../application/validation/ingredient";
+} from "@/application/validation/ingredient";
 import type {
   Ingredient,
   IngredientPriceHistory,
-} from "../../domain/ingredients/types";
+} from "@/domain/ingredients/types";
 
 export type ActionResult<T> =
   | { success: true; data: T }

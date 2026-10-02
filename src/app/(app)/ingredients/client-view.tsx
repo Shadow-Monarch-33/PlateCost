@@ -5,8 +5,8 @@ import type {
   Ingredient,
   IngredientPriceHistory,
   BaseUnit,
-} from "../../domain/ingredients/types";
-import { supportedBaseUnits } from "../../application/validation/ingredient";
+} from "@/domain/ingredients/types";
+import { supportedBaseUnits } from "@/application/validation/ingredient";
 import {
   createIngredientAction,
   updateIngredientAction,
