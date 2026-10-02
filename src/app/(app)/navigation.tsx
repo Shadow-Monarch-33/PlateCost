@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
+import { UserAccountMenu } from "./user-menu";
 
 interface NavItem {
   label: string;
@@ -19,23 +19,12 @@ const NAV_ITEMS: NavItem[] = [
 
 interface Props {
   userEmail: string | undefined;
+  displayName: string | undefined;
   businessName: string | null;
 }
 
-export function AppNavigation({ userEmail, businessName }: Props) {
-  const [isSigningOut, setIsSigningOut] = useState(false);
+export function AppNavigation({ userEmail, displayName, businessName }: Props) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut();
-      window.location.href = "/login";
-    } catch {
-      setIsSigningOut(false);
-    }
-  };
 
   return (
     <header className="border-b border-zinc-200 bg-white">
@@ -68,16 +57,9 @@ export function AppNavigation({ userEmail, businessName }: Props) {
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
-            <span className="hidden sm:block text-xs text-zinc-500 truncate max-w-[180px]">
-              {userEmail}
-            </span>
-            <button
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition-colors"
-            >
-              {isSigningOut ? "Signing out..." : "Sign out"}
-            </button>
+            <div className="hidden sm:block">
+              <UserAccountMenu email={userEmail} displayName={displayName} />
+            </div>
 
             {/* Mobile menu toggle */}
             <button
@@ -122,8 +104,8 @@ export function AppNavigation({ userEmail, businessName }: Props) {
                 {item.label}
               </a>
             ))}
-            <div className="mt-2 px-3 text-xs text-zinc-500 sm:hidden">
-              {userEmail}
+            <div className="mt-4 px-3 border-t border-zinc-200 pt-4">
+              <UserAccountMenu email={userEmail} displayName={displayName} />
             </div>
           </nav>
         )}

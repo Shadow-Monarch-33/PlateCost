@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 
 export function SignupForm() {
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -14,6 +15,12 @@ export function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const trimmedName = displayName.trim();
+    if (!trimmedName) {
+      setError("Display name is required.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -32,6 +39,11 @@ export function SignupForm() {
       const { error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          data: {
+            display_name: trimmedName,
+          },
+        },
       });
 
       if (authError) {
@@ -78,6 +90,27 @@ export function SignupForm() {
           {error}
         </div>
       )}
+
+      <div>
+        <label
+          htmlFor="displayName"
+          className="block text-sm font-medium text-zinc-700"
+        >
+          Display name
+        </label>
+        <input
+          id="displayName"
+          name="displayName"
+          type="text"
+          autoComplete="name"
+          required
+          maxLength={50}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 shadow-2xs focus:border-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-500"
+          placeholder="Jane Doe"
+        />
+      </div>
 
       <div>
         <label

@@ -16,6 +16,7 @@ export default async function AppLayout({
     <div className="min-h-screen bg-zinc-50">
       <AppNavigation
         userEmail={user.email}
+        displayName={user.displayName}
         businessName={business?.businessName ?? null}
       />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

@@ -1,10 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_ROUTES = ["/dashboard", "/ingredients", "/recipes", "/menu", "/invoices"];
+const PROTECTED_ROUTES = ["/dashboard", "/ingredients", "/recipes", "/menu", "/invoices", "/profile", "/settings"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
-function isProtectedRoute(pathname: string): boolean {
+export function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + "/"),
   );

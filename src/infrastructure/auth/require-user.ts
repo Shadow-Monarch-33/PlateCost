@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 export interface AuthenticatedUser {
   id: string;
   email: string | undefined;
+  displayName: string | undefined;
 }
 
 /**
@@ -29,5 +30,6 @@ export async function requireAuthenticatedUser(): Promise<AuthenticatedUser> {
   return {
     id: user.id,
     email: user.email,
+    displayName: user.user_metadata?.display_name as string | undefined,
   };
 }
