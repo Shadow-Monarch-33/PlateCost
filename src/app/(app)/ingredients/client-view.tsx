@@ -565,7 +565,7 @@ export function IngredientsClientView({ initialIngredients }: Props) {
                       <th className="py-2.5 px-3 text-left">Source</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700">
                     {historyRecords.map((rec) => (
                       <tr key={rec.id}>
                         <td className="py-2.5 px-3 text-zinc-500 whitespace-nowrap">
