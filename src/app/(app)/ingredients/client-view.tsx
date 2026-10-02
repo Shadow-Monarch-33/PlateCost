@@ -205,7 +205,7 @@ export function IngredientsClientView({ initialIngredients }: Props) {
               setFormError(null);
               setIsAddOpen(true);
             }}
-            className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center justify-center rounded-lg border border-white bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-950 transition-colors"
           >
             + Add Ingredient
           </button>
