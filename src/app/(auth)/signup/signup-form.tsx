@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { validateSignupPayload } from "@/application/auth/validation";
@@ -7,6 +8,7 @@ import { SignupConfirmation } from "./signup-confirmation";
 import { detectExistingAccount } from "@/application/auth/existing-account";
 
 export function SignupForm() {
+  const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,7 +63,7 @@ export function SignupForm() {
 
       if (data.session) {
         // Email confirmation is disabled; session is provided immediately
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
         return;
       }
 
