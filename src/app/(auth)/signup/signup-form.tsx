@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { validateSignupPayload } from "@/application/auth/validation";
 import { SignupConfirmation } from "./signup-confirmation";
+import { detectExistingAccount } from "@/application/auth/existing-account";
 
 export function SignupForm() {
   const [displayName, setDisplayName] = useState("");
@@ -13,10 +14,12 @@ export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [isExistingAccount, setIsExistingAccount] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsExistingAccount(false);
 
     const validationError = validateSignupPayload(displayName, email, password, confirmPassword);
     if (validationError) {
@@ -28,7 +31,7 @@ export function SignupForm() {
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { data, error: authError } = await supabase.auth.signUp({
+      const response = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -37,6 +40,18 @@ export function SignupForm() {
           },
         },
       });
+
+      const classification = detectExistingAccount(response);
+
+      if (classification === "existing") {
+        setIsExistingAccount(true);
+        setPassword("");
+        setConfirmPassword("");
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error: authError } = response;
 
       if (authError) {
         setError(authError.message);
@@ -58,6 +73,28 @@ export function SignupForm() {
       setIsLoading(false);
     }
   };
+
+  if (isExistingAccount) {
+    return (
+      <div className="rounded-xl bg-white border border-zinc-200 p-6 shadow-2xs text-center">
+        <div className="text-3xl mb-3">👤</div>
+        <h2 className="text-lg font-semibold text-zinc-900" aria-live="polite">
+          An account already exists with this email.
+        </h2>
+        <p className="mt-2 text-sm text-zinc-500">
+          Try signing in instead.
+        </p>
+        <div className="mt-6">
+          <a
+            href="/login"
+            className="inline-flex w-full justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors"
+          >
+            Go to login
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (needsConfirmation) {
     return <SignupConfirmation email={email.trim()} />;
