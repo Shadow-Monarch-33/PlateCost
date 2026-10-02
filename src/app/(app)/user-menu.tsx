@@ -8,15 +8,17 @@ import { getSafeDisplayName } from "@/application/auth/display-name";
 interface Props {
   email: string | undefined;
   displayName: string | undefined;
+  avatarUrl: string | undefined;
 }
 
-export function UserAccountMenu({ email, displayName }: Props) {
+export function UserAccountMenu({ email, displayName, avatarUrl }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Fallback to email (username part) if display name is absent
   const safeDisplayName = getSafeDisplayName(displayName, email);
+  const currentAvatarSrc = avatarUrl || "/images/default-avatar.jpeg";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -61,11 +63,11 @@ export function UserAccountMenu({ email, displayName }: Props) {
         aria-haspopup="true"
       >
         <Image width={28} height={28}
-          src="/images/default-avatar.jpeg"
+          src={currentAvatarSrc}
           alt={safeDisplayName}
           className="h-7 w-7 rounded-full object-cover"
         />
-        <span className="text-sm font-medium text-zinc-700 max-w-[120px] truncate">
+        <span className="text-sm font-medium text-zinc-700 max-w-30 truncate">
           {safeDisplayName}
         </span>
         <svg
@@ -89,7 +91,7 @@ export function UserAccountMenu({ email, displayName }: Props) {
         <div className="absolute right-0 top-full mt-2 w-72 origin-top-right rounded-xl border border-zinc-800 bg-zinc-900 p-2 shadow-xl ring-1 ring-black/5 focus:outline-hidden z-50">
           <div className="flex items-center gap-3 px-3 py-3">
             <Image width={40} height={40}
-              src="/images/default-avatar.jpeg"
+              src={currentAvatarSrc}
               alt={safeDisplayName}
               className="h-10 w-10 rounded-full object-cover ring-1 ring-zinc-800"
             />

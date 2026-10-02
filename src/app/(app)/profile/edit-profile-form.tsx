@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { getSafeDisplayName } from "@/application/auth/display-name";
+import { uploadUserAvatar, removeUserAvatar } from "@/application/auth/avatar";
 import Image from "next/image";
 
 interface Props {
+  userId: string;
   initialDisplayName: string | undefined;
+  initialAvatarUrl: string | undefined;
   email: string | undefined;
   createdAt: string;
 }
 
-export function EditProfileForm({ initialDisplayName, email, createdAt }: Props) {
+export function EditProfileForm({ userId, initialDisplayName, initialAvatarUrl, email, createdAt }: Props) {
   const router = useRouter();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -24,6 +27,96 @@ export function EditProfileForm({ initialDisplayName, email, createdAt }: Props)
   
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialAvatarUrl ?? null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const currentAvatarSrc = avatarPreview || "/images/default-avatar.jpeg";
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarError(null);
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      setAvatarError("Please choose a JPG, PNG, WebP, or GIF image.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("That image is too large. Maximum size is 5 MB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+    setSuccess(false);
+  };
+
+  const cancelAvatarChange = () => {
+    setAvatarFile(null);
+    setAvatarPreview(initialAvatarUrl ?? null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setAvatarError(null);
+  };
+
+    const saveAvatar = async () => {
+    if (!avatarFile) return;
+    setIsUploading(true);
+    setAvatarError(null);
+    setSuccess(false);
+    setError(null);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error: uploadErr, avatarUrl: newAvatarUrl } = await uploadUserAvatar(supabase, userId, avatarFile, initialAvatarUrl);
+
+      if (uploadErr) {
+        setAvatarError(uploadErr);
+        setIsUploading(false);
+        return;
+      }
+
+      setAvatarFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setSuccess(true);
+      router.refresh();
+      setIsUploading(false);
+    } catch {
+      setAvatarError("An unexpected error occurred.");
+      setIsUploading(false);
+    }
+  };
+
+    const removeAvatar = async () => {
+    setIsUploading(true);
+    setAvatarError(null);
+    setSuccess(false);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error: removeErr } = await removeUserAvatar(supabase, userId, initialAvatarUrl);
+
+      if (removeErr) {
+        setAvatarError(removeErr);
+        setIsUploading(false);
+        return;
+      }
+
+      setAvatarPreview(null);
+      setAvatarFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setSuccess(true);
+      router.refresh();
+      setIsUploading(false);
+    } catch {
+      setAvatarError("An unexpected error occurred.");
+      setIsUploading(false);
+    }
+  };
 
   const safeSavedDisplayName = getSafeDisplayName(savedDisplayName, email);
 
@@ -105,24 +198,82 @@ export function EditProfileForm({ initialDisplayName, email, createdAt }: Props)
     <div className="max-w-xl rounded-xl border border-zinc-200 bg-white shadow-2xs">
       <div className="p-6">
         <div className="flex items-start gap-6">
-          <Image width={80} height={80}
-            src="/images/default-avatar.jpeg"
-            alt={safeSavedDisplayName}
-            className="h-20 w-20 rounded-full object-cover ring-1 ring-zinc-200 shrink-0"
-          />
+          
+          <div className="flex flex-col items-center gap-3 shrink-0">
+            <Image width={80} height={80}
+              src={currentAvatarSrc}
+              alt={safeSavedDisplayName}
+              className="h-20 w-20 rounded-full object-cover ring-1 ring-zinc-200"
+            />
+            {!isEditing && (
+              <div className="flex flex-col gap-1 w-full text-center">
+                <input 
+                  type="file" 
+                  accept="image/jpeg,image/png,image/webp,image/gif" 
+                  className="hidden" 
+                  ref={fileInputRef} 
+                  onChange={handleAvatarSelect} 
+                />
+                
+                {avatarFile ? (
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={saveAvatar}
+                      disabled={isUploading}
+                      className="text-xs font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-md py-1 px-2 disabled:opacity-50"
+                      aria-label="Save photo"
+                    >
+                      {isUploading ? "Uploading..." : "Save photo"}
+                    </button>
+                    <button
+                      onClick={cancelAvatarChange}
+                      disabled={isUploading}
+                      className="text-xs font-medium text-zinc-600 hover:text-zinc-900 rounded-md py-1 px-2 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="text-xs font-medium text-zinc-600 hover:text-zinc-900 py-1"
+                      aria-label="Change profile picture"
+                    >
+                      Change photo
+                    </button>
+                    {initialAvatarUrl && (
+                      <button
+                        onClick={removeAvatar}
+                        disabled={isUploading}
+                        className="text-xs font-medium text-red-600 hover:text-red-700 py-1"
+                        aria-label="Remove profile picture"
+                      >
+                        Remove photo
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           
           <div className="flex-1 min-w-0 pt-1">
+            
             {success && !isEditing && (
               <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700 border border-green-200">
                 Profile updated successfully.
               </div>
             )}
             
-            {error && !isEditing && (
+            {(error || avatarError) && !isEditing && (
               <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
-                {error}
+                {error || avatarError}
               </div>
             )}
+
 
             {!isEditing ? (
               <div>

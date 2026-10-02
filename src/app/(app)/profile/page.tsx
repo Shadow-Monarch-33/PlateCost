@@ -20,7 +20,9 @@ export default async function ProfilePage() {
       </div>
 
       <EditProfileForm
+        userId={user.id}
         initialDisplayName={user.displayName}
+        initialAvatarUrl={user.avatarUrl}
         email={user.email}
         createdAt={user.createdAt}
       />

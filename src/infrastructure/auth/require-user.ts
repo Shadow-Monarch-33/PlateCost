@@ -5,6 +5,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string | undefined;
   displayName: string | undefined;
+  avatarUrl: string | undefined;
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ export async function requireAuthenticatedUser(): Promise<AuthenticatedUser> {
     id: user.id,
     email: user.email,
     displayName: user.user_metadata?.display_name as string | undefined,
+    avatarUrl: user.user_metadata?.avatar_url as string | undefined,
     createdAt: user.created_at,
   };
 }

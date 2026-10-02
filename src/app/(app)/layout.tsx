@@ -17,6 +17,7 @@ export default async function AppLayout({
       <AppNavigation
         userEmail={user.email}
         displayName={user.displayName}
+        avatarUrl={user.avatarUrl}
         businessName={business?.businessName ?? null}
       />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

@@ -20,10 +20,11 @@ const NAV_ITEMS: NavItem[] = [
 interface Props {
   userEmail: string | undefined;
   displayName: string | undefined;
+  avatarUrl: string | undefined;
   businessName: string | null;
 }
 
-export function AppNavigation({ userEmail, displayName, businessName }: Props) {
+export function AppNavigation({ userEmail, displayName, avatarUrl, businessName }: Props) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -58,7 +59,7 @@ export function AppNavigation({ userEmail, displayName, businessName }: Props) {
           {/* User Menu */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:block">
-              <UserAccountMenu email={userEmail} displayName={displayName} />
+              <UserAccountMenu email={userEmail} displayName={displayName} avatarUrl={avatarUrl} />
             </div>
 
             {/* Mobile menu toggle */}
@@ -105,7 +106,7 @@ export function AppNavigation({ userEmail, displayName, businessName }: Props) {
               </a>
             ))}
             <div className="mt-4 px-3 border-t border-zinc-200 pt-4">
-              <UserAccountMenu email={userEmail} displayName={displayName} />
+              <UserAccountMenu email={userEmail} displayName={displayName} avatarUrl={avatarUrl} />
             </div>
           </nav>
         )}
