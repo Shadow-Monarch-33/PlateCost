@@ -275,7 +275,7 @@ export function IngredientsClientView({ initialIngredients }: Props) {
                 </tr>
               ) : (
                 filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-zinc-50/75 transition-colors">
+                  <tr key={item.id}>
                     <td className="px-6 py-4 font-medium text-zinc-900">
                       {item.name}
                     </td>
