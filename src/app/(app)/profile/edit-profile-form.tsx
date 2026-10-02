@@ -34,7 +34,7 @@ export function EditProfileForm({ userId, initialDisplayName, initialAvatarUrl, 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const currentAvatarSrc = avatarPreview || "/images/default-avatar.jpeg";
+  const currentAvatarSrc = avatarPreview || "/images/default_pfp.jpeg";
 
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,7 +72,7 @@ export function EditProfileForm({ userId, initialDisplayName, initialAvatarUrl, 
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: uploadErr, avatarUrl: newAvatarUrl } = await uploadUserAvatar(supabase, userId, avatarFile, initialAvatarUrl);
+      const { error: uploadErr } = await uploadUserAvatar(supabase, userId, avatarFile, initialAvatarUrl);
 
       if (uploadErr) {
         setAvatarError(uploadErr);

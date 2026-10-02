@@ -2,6 +2,7 @@
 import Image from "next/image";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { getSafeDisplayName } from "@/application/auth/display-name";
 
@@ -15,10 +16,11 @@ export function UserAccountMenu({ email, displayName, avatarUrl }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Fallback to email (username part) if display name is absent
   const safeDisplayName = getSafeDisplayName(displayName, email);
-  const currentAvatarSrc = avatarUrl || "/images/default-avatar.jpeg";
+  const currentAvatarSrc = avatarUrl || "/images/default_pfp.jpeg";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,7 +50,7 @@ export function UserAccountMenu({ email, displayName, avatarUrl }: Props) {
     try {
       const supabase = createSupabaseBrowserClient();
       await supabase.auth.signOut();
-      window.location.href = "/login";
+      router.push("/login");
     } catch {
       setIsSigningOut(false);
     }
