@@ -1,10 +1,12 @@
 import { LoginForm } from "./login-form";
+import { requireUnauthenticatedUser } from "@/infrastructure/auth/require-user";
 
 export const metadata = {
   title: "Sign In — PlateCost",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await requireUnauthenticatedUser();
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-sm">

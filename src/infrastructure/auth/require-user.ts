@@ -35,3 +35,18 @@ export async function requireAuthenticatedUser(): Promise<AuthenticatedUser> {
     createdAt: user.created_at,
   };
 }
+
+/**
+ * Ensures the user is NOT authenticated.
+ * Use this on auth pages (/login, /signup) to redirect authenticated users to the dashboard.
+ */
+export async function requireUnauthenticatedUser(): Promise<void> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+}

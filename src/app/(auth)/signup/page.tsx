@@ -1,10 +1,12 @@
 import { SignupForm } from "./signup-form";
+import { requireUnauthenticatedUser } from "@/infrastructure/auth/require-user";
 
 export const metadata = {
   title: "Create Account — PlateCost",
 };
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  await requireUnauthenticatedUser();
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-sm">
