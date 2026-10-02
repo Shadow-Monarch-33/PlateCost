@@ -10,7 +10,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:cross-tenant": "node --env-file=.env.local scripts/verify-cross-tenant-ingredients.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

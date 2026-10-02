@@ -17,6 +17,14 @@ export default function Home() {
         <li className="rounded-lg border border-zinc-200 p-4">Tenant-isolated migrations</li>
         <li className="rounded-lg border border-zinc-200 p-4">Vitest and strict TypeScript</li>
       </ul>
+      <div>
+        <a
+          href="/ingredients"
+          className="inline-flex items-center justify-center rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-zinc-800 transition-colors"
+        >
+          Manage Ingredients →
+        </a>
+      </div>
     </main>
   );
 }
