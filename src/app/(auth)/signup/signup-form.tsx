@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
+import { validateSignupPayload } from "@/application/auth/validation";
 
 export function SignupForm() {
   const [displayName, setDisplayName] = useState("");
@@ -16,19 +17,9 @@ export function SignupForm() {
     e.preventDefault();
     setError(null);
 
-    const trimmedName = displayName.trim();
-    if (!trimmedName) {
-      setError("Display name is required.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    const validationError = validateSignupPayload(displayName, email, password, confirmPassword);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -41,7 +32,7 @@ export function SignupForm() {
         password,
         options: {
           data: {
-            display_name: trimmedName,
+            display_name: displayName.trim(),
           },
         },
       });
