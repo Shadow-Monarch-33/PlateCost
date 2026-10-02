@@ -239,7 +239,7 @@ export function IngredientsClientView({ initialIngredients }: Props) {
       <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xs">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
-            <thead className="bg-zinc-50 text-xs font-medium text-zinc-600 uppercase tracking-wider">
+            <thead className="border-b border-zinc-200 bg-white text-xs font-medium text-zinc-600 uppercase tracking-wider">
               <tr>
                 <th scope="col" className="px-6 py-3.5">
                   Ingredient
@@ -557,7 +557,7 @@ export function IngredientsClientView({ initialIngredients }: Props) {
                 </div>
               ) : (
                 <table className="min-w-full text-xs">
-                  <thead className="border-b border-zinc-200 bg-zinc-50 font-medium text-zinc-600">
+                  <thead className="border-b border-zinc-100 bg-zinc-50 font-medium text-zinc-600">
                     <tr>
                       <th className="py-2.5 px-3 text-left">Date</th>
                       <th className="py-2.5 px-3 text-left">Change</th>
