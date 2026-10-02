@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { validateSignupPayload } from "@/application/auth/validation";
+import { SignupConfirmation } from "./signup-confirmation";
 
 export function SignupForm() {
   const [displayName, setDisplayName] = useState("");
@@ -11,7 +12,7 @@ export function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +28,7 @@ export function SignupForm() {
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -43,9 +44,14 @@ export function SignupForm() {
         return;
       }
 
-      // If email confirmation is disabled, redirect immediately
-      // If enabled, show a success message
-      setIsSuccess(true);
+      if (data.session) {
+        // Email confirmation is disabled; session is provided immediately
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      // Email confirmation is required
+      setNeedsConfirmation(true);
       setIsLoading(false);
     } catch {
       setError("An unexpected error occurred. Please try again.");
@@ -53,25 +59,8 @@ export function SignupForm() {
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="rounded-xl bg-white border border-zinc-200 p-6 shadow-2xs text-center">
-        <div className="text-3xl mb-3">✉️</div>
-        <h2 className="text-lg font-semibold text-zinc-900">Check your email</h2>
-        <p className="mt-2 text-sm text-zinc-500">
-          We sent a confirmation link to{" "}
-          <strong className="text-zinc-700">{email}</strong>. Click the link to
-          activate your account, then{" "}
-          <a
-            href="/login"
-            className="font-medium text-zinc-900 underline underline-offset-4"
-          >
-            sign in
-          </a>
-          .
-        </p>
-      </div>
-    );
+  if (needsConfirmation) {
+    return <SignupConfirmation email={email.trim()} />;
   }
 
   return (
