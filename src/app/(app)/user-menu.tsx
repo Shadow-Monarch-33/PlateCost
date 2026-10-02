@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/infrastructure/supabase/browser";
 import { getSafeDisplayName } from "@/application/auth/display-name";
+import { ThemeToggle } from "./theme-toggle";
 
 interface Props {
   email: string | undefined;
@@ -121,6 +122,8 @@ export function UserAccountMenu({ email, displayName, avatarUrl }: Props) {
                 Manage your PlateCost account and profile
               </span>
             </a>
+
+            <ThemeToggle />
             
             <a
               href="/settings"
