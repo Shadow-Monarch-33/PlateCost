@@ -47,4 +47,20 @@ describe("Menu Costing", () => {
     expect(result.contribution).toBeNull();
     expect(result.contributionMargin).toBeNull();
   });
+
+  it("handles zero or negative selling prices without throwing", () => {
+    const resultZero = calculateMenuEconomics({
+      sellingPrice: 0,
+      costPerServing: 82,
+    });
+    expect(resultZero.foodCostPercent).toBeNull();
+    expect(resultZero.contribution).toBeNull();
+
+    const resultNegative = calculateMenuEconomics({
+      sellingPrice: -10,
+      costPerServing: 82,
+    });
+    expect(resultNegative.foodCostPercent).toBeNull();
+    expect(resultNegative.contribution).toBeNull();
+  });
 });

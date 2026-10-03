@@ -31,6 +31,14 @@ export function calculateMenuEconomics(input: CalculateMenuEconomicsInput): Menu
   const sellingPrice = new Decimal(input.sellingPrice);
   const ingredientCost = new Decimal(input.costPerServing);
   
+  if (sellingPrice.isNaN() || !sellingPrice.isFinite() || sellingPrice.lessThanOrEqualTo(0)) {
+    return {
+      foodCostPercent: null,
+      contribution: null,
+      contributionMargin: null,
+    };
+  }
+  
   // Platform fee percent from DB is typically 0-100 (e.g. 25 for 25%).
   // The finance engine expects a ratio (0-1), so we divide by 100.
   let platformFeePercent = new Decimal(0);
