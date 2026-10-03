@@ -237,7 +237,6 @@ export function RecipeForm({
                 {rows.map((row, index) => {
                   const ingredient = ingredientById.get(row.ingredient_id);
                   const units = ingredient ? getCompatibleUnits(ingredient.base_unit) : [];
-                  const lineCost = preview?.lines.get(row.ingredient_id);
                   return (
                     <div
                       key={row.key}
@@ -304,9 +303,6 @@ export function RecipeForm({
                         </select>
                       </div>
                       <div className="col-span-3 sm:col-span-2 flex items-center justify-end gap-2">
-                        <span className="text-xs text-zinc-500 tabular-nums">
-                          {lineCost ?? ""}
-                        </span>
                         <button
                           type="button"
                           onClick={() =>
