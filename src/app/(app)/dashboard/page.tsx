@@ -32,11 +32,16 @@ export default async function DashboardPage() {
     );
   }
 
-  // Fetch ingredient count for a simple dashboard stat
-  const { count: ingredientCount } = await supabase
-    .from("ingredients")
-    .select("*", { count: "exact", head: true })
-    .eq("business_id", business.businessId);
+  const [{ count: ingredientCount }, { count: recipeCount }] = await Promise.all([
+    supabase
+      .from("ingredients")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", business.businessId),
+    supabase
+      .from("recipes")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", business.businessId),
+  ]);
 
   return (
     <div>
@@ -64,14 +69,18 @@ export default async function DashboardPage() {
           <p className="mt-1 text-xs text-zinc-400">Tracked items →</p>
         </a>
 
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-5">
+        <a
+          href="/recipes"
+          className="rounded-xl border border-zinc-200 bg-white p-5 shadow-2xs hover:border-zinc-300 transition-colors"
+        >
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
             Recipes
           </p>
-          <p className="mt-2 text-sm text-zinc-400">
-            Coming soon
+          <p className="mt-2 text-2xl font-bold text-zinc-900">
+            {recipeCount ?? 0}
           </p>
-        </div>
+          <p className="mt-1 text-xs text-zinc-400">Created recipes →</p>
+        </a>
 
         <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 p-5">
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
@@ -101,6 +110,12 @@ export default async function DashboardPage() {
             className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-2xs hover:bg-zinc-50 transition-colors"
           >
             Manage Ingredients
+          </a>
+          <a
+            href="/recipes"
+            className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-2xs hover:bg-zinc-50 transition-colors"
+          >
+            Manage Recipes
           </a>
         </div>
       </div>
