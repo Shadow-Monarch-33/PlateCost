@@ -20,6 +20,7 @@ interface Props {
 export function RecipesClientView({ initialRecipes, ingredients }: Props) {
   const [recipes, setRecipes] = useState<RecipeWithCost[]>(initialRecipes);
   const [isPending, startTransition] = useTransition();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<RecipeWithCost | null>(null);
@@ -70,6 +71,10 @@ export function RecipesClientView({ initialRecipes, ingredients }: Props) {
   };
 
   const hasNoIngredients = ingredients.length === 0;
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const visibleRecipes = normalizedSearchQuery
+    ? recipes.filter((recipe) => recipe.name.toLowerCase().includes(normalizedSearchQuery))
+    : recipes;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
@@ -129,8 +134,30 @@ export function RecipesClientView({ initialRecipes, ingredients }: Props) {
       )}
 
       {recipes.length > 0 && (
+        <div className="mt-8">
+          <label htmlFor="recipe-search" className="sr-only">
+            Search recipes
+          </label>
+          <input
+            id="recipe-search"
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search recipes..."
+            className="w-full max-w-sm rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm text-zinc-900 placeholder-zinc-400 shadow-2xs focus:border-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-500"
+          />
+        </div>
+      )}
+
+      {recipes.length > 0 && visibleRecipes.length === 0 && (
+        <div className="mt-8 rounded-lg border border-zinc-200 bg-zinc-50 p-12 text-center">
+          <p className="text-sm text-zinc-600">No recipes found</p>
+        </div>
+      )}
+
+      {visibleRecipes.length > 0 && (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {recipes.map((recipe) => (
+          {visibleRecipes.map((recipe) => (
             <div
               key={recipe.id}
               className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-xs"
