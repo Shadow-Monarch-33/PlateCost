@@ -1,18 +1,34 @@
+import { createSupabaseServerClient } from "@/infrastructure/supabase/server";
+import {
+  getIngredients,
+  resolveUserBusiness,
+} from "@/infrastructure/supabase/ingredients";
+import { getRecipesWithCosts } from "@/infrastructure/supabase/recipes";
+import { RecipesClientView } from "./client-view";
+
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Recipes — PlateCost",
 };
 
-export default function RecipesPage() {
+export default async function RecipesPage() {
+  const supabase = await createSupabaseServerClient();
+  const session = await resolveUserBusiness(supabase);
+  const [ingredients, recipes] = await Promise.all([
+    getIngredients(supabase, session.businessId),
+    getRecipesWithCosts(supabase, session.businessId),
+  ]);
+
   return (
-    <div className="mx-auto max-w-2xl py-16 text-center">
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-8">
-        <p className="text-3xl">📋</p>
-        <h1 className="mt-4 text-xl font-semibold text-zinc-900">Recipes</h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          Recipe management with ingredient costing is coming soon. You&apos;ll
-          be able to create recipes, calculate food costs, and track margins.
-        </p>
-      </div>
-    </div>
+    <RecipesClientView
+      initialRecipes={recipes}
+      ingredients={ingredients.map((ingredient) => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        base_unit: ingredient.base_unit,
+        current_price: String(ingredient.current_price),
+      }))}
+    />
   );
 }

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { uploadUserAvatar, removeUserAvatar } from '@/application/auth/avatar';
 import type { SupabaseClient } from '@supabase/supabase-js';
