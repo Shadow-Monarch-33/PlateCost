@@ -1,78 +1,203 @@
 # PlateCost
 
-PlateCost is a planned financial decision platform for small food businesses. This repository
-currently contains the technical foundation only; menu economics, invoice extraction, scenarios,
-and other product workflows are **not implemented yet**.
+**Food costing and menu profitability, without the guesswork.**
+
+PlateCost is a work-in-progress web application designed to help small food businesses manage ingredient costs, calculate recipe expenses, and understand menu profitability.
+
+Built with **Next.js, TypeScript, and Supabase**, the project focuses on reliable financial calculations, structured data management, and a maintainable application architecture.
+
+> **Project status:** Active development. Core costing and management functionality is implemented, but some areas of the application remain incomplete. PlateCost is not currently intended for production use.
+
+---
+
+## Features
+
+### Ingredient Management
+- Create, view, update, and manage ingredients.
+- Track ingredient prices and associated costs.
+- Maintain ingredient price history.
+- Organize ingredient data for use in recipes.
+
+### Recipe Costing
+- Create and manage recipes.
+- Associate ingredients with recipes.
+- Calculate recipe costs from ingredient quantities and prices.
+- Handle unit conversions during cost calculations.
+
+### Menu Profitability
+- Organize recipes into menu items.
+- Calculate item costs and estimated profitability.
+- Compare selling prices against calculated costs.
+- Support more informed menu-pricing decisions.
+
+### Financial Calculation Engine
+- Decimal-based calculations designed to reduce floating-point precision issues.
+- Dedicated costing and unit-conversion logic.
+- Separation of financial calculations from presentation components.
+- Automated unit tests for calculation behavior.
+
+### Authentication and Data Isolation
+- Supabase-based authentication.
+- Protected application routes.
+- PostgreSQL-backed data storage.
+- Row-level security policies for user data isolation.
+
+---
+
+## Tech Stack
+
+| Category | Technologies |
+|---|---|
+| Framework | Next.js |
+| Language | TypeScript |
+| Frontend | React |
+| Styling | Tailwind CSS |
+| Backend & Authentication | Supabase |
+| Database | PostgreSQL |
+| Testing | Automated unit and security verification scripts |
+
+---
 
 ## Architecture
 
-PlateCost is one Next.js application with a hybrid layered structure:
+PlateCost separates its business logic, application workflows, data access, and user interface into distinct layers.
 
-- `src/app` - Next.js routes and the intentionally minimal foundation landing page.
-- `src/application` - orchestration contracts and runtime validation for untrusted input.
-- `src/domain` - framework-independent financial and unit contracts. This layer must remain free
-  of React, Next.js, Supabase, AI SDKs, and browser APIs.
-- `src/infrastructure` - Supabase browser/server integration boundaries.
-- `supabase/migrations` - tenant-isolated PostgreSQL schema, scenario/impact boundaries, and
-  transactional database functions.
-- `tests` - focused domain tests and shared fixtures.
-
-Dependencies point inward: UI/application code may use domain contracts; infrastructure implements
-external boundaries; the domain does not import from either.
-
-## Stack
-
-- Node 24.21.0 and pnpm 12.4.2
-- Next.js 16.3.8, React 19.3.0, TypeScript 6.0.3
-- Tailwind CSS 4.3.3 and shadcn/ui configuration (no product components yet)
-- Supabase JS 2.117.2 and Supabase SSR 0.12.7
-- Zod 4.6.5 and Vitest 5.0.3
-
-The versions above are the versions installed and locally verified from the npm registry on
-October 1, 2026. Absolute future-version stability cannot be guaranteed; dependency upgrades
-should be re-verified before release.
-
-## Local setup
-
-1. Install Node 24.21.0 and pnpm 12.4.2 (`corepack enable` is recommended).
-2. Copy `.env.example` to `.env.local` and fill in the public Supabase values.
-3. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-
-4. Apply `supabase/migrations` to a Supabase project using the Supabase CLI or dashboard.
-5. Start development:
-
-   ```bash
-   pnpm dev
-   ```
-
-Required variables are `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-`SUPABASE_SERVICE_ROLE_KEY` is reserved for server-only privileged operations and must never be
-exposed to browser code. `AI_PROVIDER_API_KEY` is reserved for a future server-side provider
-adapter. The canonical architecture's scenario, price-change, and business-snapshot tables are
-storage boundaries only; their product workflows are not implemented yet.
-
-## Verification commands
-
-```bash
-pnpm test
-pnpm lint
-pnpm typecheck
-pnpm build
+```text
+PlateCost/
+├── Domain Logic
+│   ├── Financial calculations
+│   ├── Costing rules
+│   └── Unit conversions
+│
+├── Application Layer
+│   └── Business workflows
+│
+├── Infrastructure
+│   ├── Supabase integration
+│   └── Database access
+│
+├── User Interface
+│   ├── Dashboard
+│   ├── Ingredients
+│   ├── Recipes
+│   └── Menu management
+│
+└── Database
+    ├── PostgreSQL schema
+    └── Security policies
 ```
 
-Supabase credentials are required to apply and exercise the database/auth integration; they are
-not required for the local TypeScript, lint, test, and build checks. AI-provider credentials are
-not required because invoice/recipe extraction is only an abstraction at this stage.
+*Conceptual architecture overview, not a literal directory listing.*
 
-## Financial truth rule
+This separation helps keep financial calculations independently testable and limits unnecessary coupling between the interface and underlying business logic.
 
-AI output is untrusted input. It must be runtime-validated and, where required, human-confirmed
-before it can affect business data. Missing values remain nullable. Deterministic domain code owns
-unit normalization and all financial calculations. PostgreSQL `numeric(14,4)` stores current and
-historical prices; UI rounding is presentation-only. Scenarios and price-impact previews must
-remain side-effect free, while confirmed price changes use the transactional database function
-boundary.
+---
+
+## Getting Started
+
+### Prerequisites
+
+You'll need:
+
+- Node.js and npm
+- A Supabase project
+- Git
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+cd PlateCost
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a local environment file using the repository's `.env.example` as a reference.
+
+```bash
+cp .env.example .env.local
+```
+
+Provide the Supabase configuration values required by the application.
+
+**Never commit real environment credentials or service-role keys to GitHub.**
+
+### 4. Set up the database
+
+Create or configure your Supabase project and apply the SQL migrations included in the repository in their intended order.
+
+Ensure the database schema and row-level security policies are applied before using the application.
+
+### 5. Start the development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## Testing
+
+PlateCost includes automated tests and verification scripts covering important parts of its functionality, including financial calculations and database access controls.
+
+The repository also contains verification documentation for cross-tenant isolation and related security behavior.
+
+Run the appropriate test scripts defined in `package.json` when developing or modifying the application.
+
+> Existing verification reports are not a substitute for independently validating a deployment.
+
+---
+
+## Current Development Status
+
+| Area | Status |
+|---|---|
+| Authentication | Implemented |
+| Ingredient management | Implemented |
+| Ingredient price history | Implemented |
+| Recipe management and costing | Implemented |
+| Menu costing and profitability | Implemented |
+| Financial calculation engine | Implemented |
+| Database security policies | Implemented |
+| Automated verification | Present |
+| Invoice functionality | Planned / incomplete |
+| Settings | Incomplete |
+| UI consistency and integration | Ongoing |
+
+Some implemented features may still require additional integration, testing, or interface improvements.
+
+---
+
+## Security
+
+PlateCost uses authentication and database-level row-level security to help isolate user data.
+
+However, the application is still under development and has not undergone a comprehensive production security audit.
+
+Before any real-world deployment, additional testing, security review, and configuration validation are recommended.
+
+---
+
+## Project Goals
+
+PlateCost aims to make food costing more accessible to smaller food businesses by providing a unified place to manage ingredients, recipes, and menu economics.
+
+The project also explores reliable financial computation, database security, and maintainable full-stack application design.
+
+Future development may include expanded reporting, invoice workflows, improved settings, and further refinement of the user experience.
+
+---
+
+## Disclaimer
+
+PlateCost is an independent, work-in-progress project. Financial outputs depend on the accuracy of the data provided and should be independently verified before being used for business decisions.
+
+**Built with Next.js, TypeScript, and Supabase.**
